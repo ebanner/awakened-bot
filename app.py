@@ -97,9 +97,11 @@ def handle_reaction_added_event(body, logger):
     reactions = get_reactions(message)
     reaction = get_reaction(reactions, emoji_name)
     users = get_users(reaction)
+    if me not in users:
+        return
+
     destination_channel = get_destination_channel()
-    if me in users:
-        tell(destination_channel, message['link'])
+    tell(destination_channel, message['link'])
 
 
 # Start your app
