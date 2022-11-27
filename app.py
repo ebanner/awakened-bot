@@ -101,7 +101,7 @@ def handle_reaction_added_event(body, logger):
         return
 
     destination_channel = get_destination_channel()
-    tell(destination_channel, message['link'])
+    tell(channel=me, text=message['link'])
 
 
 # Start your app
