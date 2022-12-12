@@ -101,13 +101,29 @@ def tell(channel, text):
 
 @app.route("/slack/events", methods=['POST'])
 def respond_to_event():
-    event = request.json.get('event', {})
+    req = request.json
+
+    #
+    # Random GET request and the like
+    #
+    if req is None:
+        return {
+            'statusCode': 200
+        }
+    
+    #
+    # Slack application endpoint check
+    #
+    if 'challenge' in req:
+        challenge_answer = req["challenge"]
+        return {
+            'statusCode': 200,
+            'body': challenge_answer,
+        } 
+
+    event = req.get('event', {})
     if event.get('type') != 'reaction_added':
         return {}
-
-    print(event)
-    import pprint
-    pprint.pprint(event)
 
     author = get_author(event)
     me = get_me()
@@ -124,6 +140,7 @@ def respond_to_event():
     tell(channel=me, text=message['link'])
 
     return {
+        'statusCode': 200,
         'challenge': event.get('challenge')
     }
 
