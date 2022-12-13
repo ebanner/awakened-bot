@@ -22,8 +22,8 @@ def http_post(url, data):
 
 
 def get_me():
-    return 'U04CYG7MEKB'
-
+    # return 'U04CYG7MEKB' # Edward's Slackbot Dev Workspace
+    return 'U02780B5563' # awakened
 
 def get_author(event):
     return event['user']
