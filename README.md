@@ -1,4 +1,4 @@
-# 👋 emoji-reaction-notifier
+# 😃 emoji-reaction-notifier
 
 Get notified when other users add to your emoji reaction (join the party!) 🎉🥳🎊
 
