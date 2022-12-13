@@ -18,8 +18,8 @@ def http_post(url, data):
 
 
 def get_me():
-    return 'U04CYG7MEKB'
-
+    # return 'U04CYG7MEKB' # Edward's Slackbot Dev Workspace
+    return 'U02780B5563' # awakened
 
 def get_author(event):
     return event['user']
@@ -93,7 +93,23 @@ def tell(channel, text):
         }
     )
     return response
-    
+
+
+def get_author_name(author_id):
+    # result = http_post(
+    #     'https://slack.com/api/users.info',
+    #     data={
+    #         'token': TOKEN,
+    #         'user': author_id,
+    #     }
+    # )
+    # return result['user']['name']
+    return f'<@{author_id}>'
+
+
+def get_text(author_name, emoji_name, link):
+    return f'{author_name} <{link}|also added> :{emoji_name}: !'
+
 
 def get_request(lambda_event):
     body = lambda_event.get("body")
@@ -144,7 +160,10 @@ def lambda_handler(event, context):
     if me not in users:
         return
 
-    tell(channel=me, text=message['link'])
+    author_name = get_author_name(author)
+    text = get_text(author_name, emoji_name, message['link'])
+
+    tell(channel=me, text=text)
 
     return {
         'statusCode': 200,
