@@ -99,6 +99,24 @@ def tell(channel, text):
     return response
 
 
+def get_author_name(author_id):
+    # result = http_post(
+    #     'https://slack.com/api/users.info',
+    #     data={
+    #         'token': TOKEN,
+    #         'user': author_id,
+    #     }
+    # )
+    # return result['user']['name']
+    return f'<@{author_id}>'
+
+
+def get_text(author_name, emoji_name, link):
+    return f"""{author_name} also added :{emoji_name}: !
+
+{link}"""
+
+
 @app.route("/slack/events", methods=['POST'])
 def respond_to_event():
     req = request.json
@@ -137,7 +155,10 @@ def respond_to_event():
     if me not in users:
         return
 
-    tell(channel=me, text=message['link'])
+    author_name = get_author_name(author)
+    text = get_text(author_name, emoji_name, message['link'])
+
+    tell(channel=me, text=text)
 
     return {
         'statusCode': 200,
