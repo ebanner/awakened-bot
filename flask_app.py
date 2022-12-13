@@ -112,9 +112,7 @@ def get_author_name(author_id):
 
 
 def get_text(author_name, emoji_name, link):
-    return f"""{author_name} also added :{emoji_name}: !
-
-{link}"""
+    return f'{author_name} <{link}|also added> :{emoji_name}: !'
 
 
 @app.route("/slack/events", methods=['POST'])
