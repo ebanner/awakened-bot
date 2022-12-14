@@ -108,7 +108,7 @@ def get_author_name(author_id):
 
 
 def get_text(author_name, emoji_name, link):
-    return f'{author_name} <{link}|also added> :{emoji_name}: !'
+    return f'{author_name} <{link}|:{emoji_name}:>'
 
 
 def get_request(lambda_event):
