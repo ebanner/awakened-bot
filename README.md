@@ -1,6 +1,6 @@
-# 😃 emoji-reaction-notifier
+# 🥳 emoji-reaction-notifier
 
-Get notified when other users add to your emoji reaction (join the party!) 🎉🥳🎊
+Get notified when other users add to your emoji reaction (join the party!) 🎉
 
 https://api.slack.com/apps/A04CKTX53EF
 
