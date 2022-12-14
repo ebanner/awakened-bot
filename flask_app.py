@@ -112,7 +112,7 @@ def get_author_name(author_id):
 
 
 def get_text(author_name, emoji_name, link):
-    return f'{author_name} <{link}|also added> :{emoji_name}: !'
+    return f'{author_name} <{link}|:{emoji_name}:>'
 
 
 @app.route("/slack/events", methods=['POST'])
@@ -143,8 +143,11 @@ def respond_to_event():
 
     author = get_author(event)
     me = get_me()
-    # if author == me:
-    #     return
+    if author == me:
+        return {
+        'statusCode': 200,
+        'challenge': event.get('challenge')
+    }
 
     message, emoji_name = get_message(event), get_emoji_name(event)
     reactions = get_reactions(message)
