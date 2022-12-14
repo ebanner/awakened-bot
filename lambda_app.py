@@ -150,8 +150,11 @@ def lambda_handler(event, context):
 
     author = get_author(event)
     me = get_me()
-    # if author == me:
-    #     return
+    if author == me:
+        return {
+        'statusCode': 200,
+        'challenge': event.get('challenge')
+    }
 
     message, emoji_name = get_message(event), get_emoji_name(event)
     reactions = get_reactions(message)
