@@ -123,6 +123,20 @@ def get_reaction_author(event):
     return users[0]
 
 
+def process_reaction_added(event):
+    for subscribed_user in get_subscribed_users():
+        reactor = get_reactor(event)
+        reaction_author = get_reaction_author(event)
+        if reaction_author == subscribed_user and reactor != subscribed_user:
+            tell_subscribed_user(subscribed_user, event)
+            break
+
+
+def process_emoji_changed(event):
+    emoji_name = event['name']
+    tell('chopping-wood', f'New emoji! :{emoji_name}:')
+
+
 def tell_subscribed_user(subscribed_user, event):
     message, emoji_name = get_message(event), get_emoji_name(event)
     reactor = get_reactor(event)
@@ -169,15 +183,13 @@ def lambda_handler(event, context):
         } 
 
     event = req.get('event', {})
-    if event.get('type') != 'reaction_added':
-        return {}
-
-    for subscribed_user in get_subscribed_users():
-        reactor = get_reactor(event)
-        reaction_author = get_reaction_author(event)
-        if reaction_author == subscribed_user and reactor != subscribed_user:
-            tell_subscribed_user(subscribed_user, event)
-            break
+    event_type = event.get('type')
+    if event_type == 'reaction_added':
+        process_reaction_added(event)
+    elif event_type == 'emoji_changed':
+        process_emoji_changed(event)
+    else:
+        raise Exception('UNKNOWN EVENT')
 
     return {
         'statusCode': 200,

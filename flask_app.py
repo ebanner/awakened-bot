@@ -134,7 +134,7 @@ def process_reaction_added(event):
 
 def process_emoji_changed(event):
     emoji_name = event['name']
-    tell('chopping wood', f'New emoji! :{emoji_name}:')
+    tell('chopping-wood', f'New emoji! :{emoji_name}:')
 
 
 def tell_subscribed_user(subscribed_user, event):
