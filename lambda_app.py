@@ -123,6 +123,18 @@ def get_reaction_author(event):
     return users[0]
 
 
+def tell_subscribed_user(subscribed_user, event):
+    message, emoji_name = get_message(event), get_emoji_name(event)
+    reactor = get_reactor(event)
+    reactor_name = get_author_name(reactor)
+    message = get_text(reactor_name, emoji_name, message['link'])
+    tell(channel=subscribed_user, text=message)
+    return {
+        'statusCode': 200,
+        'challenge': event.get('challenge')
+    }
+
+
 def process_reaction_added(event):
     for subscribed_user in get_subscribed_users():
         reactor = get_reactor(event)
@@ -135,18 +147,6 @@ def process_reaction_added(event):
 def process_emoji_changed(event):
     emoji_name = event['name']
     tell('chopping-wood', f'New emoji! :{emoji_name}:')
-
-
-def tell_subscribed_user(subscribed_user, event):
-    message, emoji_name = get_message(event), get_emoji_name(event)
-    reactor = get_reactor(event)
-    reactor_name = get_author_name(reactor)
-    message = get_text(reactor_name, emoji_name, message['link'])
-    tell(channel=subscribed_user, text=message)
-    return {
-        'statusCode': 200,
-        'challenge': event.get('challenge')
-    }
 
 
 def get_request(lambda_event):
