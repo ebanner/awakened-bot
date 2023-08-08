@@ -4,6 +4,10 @@ import urllib.request
 
 TOKEN = os.environ.get("SLACK_BOT_TOKEN")
 
+SUBSCRIBED_USERS = [
+    'U02780B5563' # @ed
+]
+
 
 def http_post(url, data):
     data = urllib.parse.urlencode(tuple(data.items()))
@@ -21,7 +25,13 @@ def get_me():
     # return 'U04CYG7MEKB' # Edward's Slackbot Dev Workspace
     return 'U02780B5563' # awakened
 
-def get_author(event):
+
+def get_subscribed_users():
+    global SUBSCRIBED_USERS
+    return SUBSCRIBED_USERS
+
+
+def get_reactor(event):
     return event['user']
 
 
@@ -53,7 +63,7 @@ def get_emoji_name(event):
     return emoji_name
 
 
-def get_reactions(message):
+def get_reaction(message, emoji_name):
     response = http_post(
         'https://slack.com/api/reactions.get',
         data={
@@ -62,12 +72,7 @@ def get_reactions(message):
             'timestamp': message['ts'],
         }
     )
-
     reactions = response['message']['reactions']
-    return reactions
-
-
-def get_reaction(reactions, emoji_name):
     reaction = [reaction for reaction in reactions if reaction['name'] == emoji_name][0]
     return reaction
 
@@ -111,6 +116,25 @@ def get_text(author_name, emoji_name, link):
     return f'{author_name} <{link}|:{emoji_name}:>'
 
 
+def get_reaction_author(event):
+    message, emoji_name = get_message(event), get_emoji_name(event)
+    reaction = get_reaction(message, emoji_name)
+    users = get_users(reaction)
+    return users[0]
+
+
+def tell_subscribed_user(subscribed_user, event):
+    message, emoji_name = get_message(event), get_emoji_name(event)
+    reactor = get_reactor(event)
+    reactor_name = get_author_name(reactor)
+    message = get_text(reactor_name, emoji_name, message['link'])
+    tell(channel=subscribed_user, text=message)
+    return {
+        'statusCode': 200,
+        'challenge': event.get('challenge')
+    }
+
+
 def get_request(lambda_event):
     body = lambda_event.get("body")
     if body is None:
@@ -148,25 +172,12 @@ def lambda_handler(event, context):
     if event.get('type') != 'reaction_added':
         return {}
 
-    author = get_author(event)
-    me = get_me()
-    if author == me:
-        return {
-        'statusCode': 200,
-        'challenge': event.get('challenge')
-    }
-
-    message, emoji_name = get_message(event), get_emoji_name(event)
-    reactions = get_reactions(message)
-    reaction = get_reaction(reactions, emoji_name)
-    users = get_users(reaction)
-    if me not in users:
-        return
-
-    author_name = get_author_name(author)
-    text = get_text(author_name, emoji_name, message['link'])
-
-    tell(channel=me, text=text)
+    for subscribed_user in get_subscribed_users():
+        reactor = get_reactor(event)
+        reaction_author = get_reaction_author(event)
+        if reaction_author == subscribed_user and reactor != subscribed_user:
+            tell_subscribed_user(subscribed_user, event)
+            break
 
     return {
         'statusCode': 200,

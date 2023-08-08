@@ -22,13 +22,13 @@ def http_post(url, data):
 
 
 def get_me():
-    return 'U04CYG7MEKB' # Edward's Slackbot Dev Workspace
-    # return 'U02780B5563' # awakened
+    # return 'U04CYG7MEKB' # Edward's Slackbot Dev Workspace
+    return 'U02780B5563' # awakened
 
 
 def get_subscribed_users():
-    me = get_me()
-    return [me, 'U05DEUP5P62']
+    global SUBSCRIBED_USERS
+    return SUBSCRIBED_USERS
 
 
 def get_reactor(event):
