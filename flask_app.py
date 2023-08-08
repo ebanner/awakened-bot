@@ -146,7 +146,9 @@ def process_reaction_added(event):
 
 def process_emoji_changed(event):
     emoji_name = event['name']
-    tell('chopping-wood', f'New emoji! :{emoji_name}:')
+    channel = 'chopping-wood'
+    tell(channel, f'New emoji! :{emoji_name}:')
+    tell(channel, f'`:{emoji_name}:`')
 
 
 @app.route("/slack/events", methods=['POST'])
