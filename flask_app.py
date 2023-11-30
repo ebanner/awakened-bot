@@ -1,12 +1,19 @@
 from flask import Flask, request
 import os
+import sys
 import json
 import urllib.request
 
 
 app = Flask(__name__)
 
-TOKEN = os.environ.get("SLACK_BOT_TOKEN")
+if '--dev' in sys.argv:
+    print('using dev token')
+    TOKEN = os.environ.get("DEV_TOKEN")
+    DESTINATION_CHANNEL = 'general'
+else:
+    TOKEN = os.environ.get("SLACK_BOT_TOKEN")
+    DESTINATION_CHANNEL = 'chopping-wood'
 
 
 def http_post(url, data):
@@ -144,11 +151,36 @@ def process_reaction_added(event):
             break
 
 
-def process_emoji_changed(event):
+def process_emoji_added(event):
     emoji_name = event['name']
-    channel = 'chopping-wood'
-    tell(channel, f'New emoji! :{emoji_name}:')
-    tell(channel, f'`:{emoji_name}:`')
+    tell(DESTINATION_CHANNEL, f'New emoji added!')
+    tell(DESTINATION_CHANNEL, f'`:{emoji_name}:`')
+    tell(DESTINATION_CHANNEL, f':{emoji_name}:')
+
+
+def process_alias_added(event):
+    alias_name = event['name']
+    emoji_name = event['value'].lstrip('alias:')
+    tell(DESTINATION_CHANNEL, f'New alias added!')
+    tell(DESTINATION_CHANNEL, f'`:{alias_name}:` → `:{emoji_name}:`')
+    tell(DESTINATION_CHANNEL, f':{emoji_name}:')
+
+
+def is_emoji_added_event(event):
+    return event['value'].startswith('https://')
+
+
+def is_alias_added_event(event):
+    return event['value'].startswith('alias:')
+
+
+def process_emoji_changed(event):
+    if is_emoji_added_event(event):
+        process_emoji_added(event)
+    elif is_alias_added_event(event):
+        process_alias_added(event)
+    else:
+        raise Exception('UNKNOWN EMOJI CHANGED EVENT')
 
 
 @app.route("/slack/events", methods=['POST'])
