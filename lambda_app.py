@@ -24,7 +24,6 @@ def http_post(url, data):
 
 
 def get_me():
-    # return 'U04CYG7MEKB' # Edward's Slackbot Dev Workspace
     return 'U02780B5563' # awakened
 
 
@@ -154,11 +153,12 @@ def process_emoji_added(event):
 
 
 def process_alias_added(event):
-    alias_name = event['name']
-    emoji_name = event['value'].lstrip('alias:')
-    tell(DESTINATION_CHANNEL, f'New alias added!')
-    tell(DESTINATION_CHANNEL, f'`:{alias_name}:` → `:{emoji_name}:`')
-    tell(DESTINATION_CHANNEL, f':{emoji_name}:')
+    pass
+    # alias_name = event['name']
+    # emoji_name = event['value'].lstrip('alias:')
+    # tell(DESTINATION_CHANNEL, f'New alias added!')
+    # tell(DESTINATION_CHANNEL, f'`:{alias_name}:` → `:{emoji_name}:`')
+    # tell(DESTINATION_CHANNEL, f':{emoji_name}:')
 
 
 def is_emoji_added_event(event):
@@ -224,4 +224,5 @@ def lambda_handler(event, context):
         'statusCode': 200,
         'challenge': event.get('challenge')
     }
+
 
