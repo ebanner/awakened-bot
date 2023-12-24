@@ -4,16 +4,19 @@ import sys
 import json
 import urllib.request
 
+from dotenv import load_dotenv
+load_dotenv()
+
+TOKEN = os.environ.get("DEV_TOKEN")
+DESTINATION_CHANNEL = 'general'
+
+
+SUBSCRIBED_USERS = [
+    'U04CYG7MEKB' # @edward.banner (Edward's Slackbot Dev Workspace)
+]
+
 
 app = Flask(__name__)
-
-if '--dev' in sys.argv:
-    print('using dev token')
-    TOKEN = os.environ.get("DEV_TOKEN")
-    DESTINATION_CHANNEL = 'general'
-else:
-    TOKEN = os.environ.get("SLACK_BOT_TOKEN")
-    DESTINATION_CHANNEL = 'chopping-wood'
 
 
 def http_post(url, data):
@@ -29,8 +32,7 @@ def http_post(url, data):
 
 
 def get_me():
-    # return 'U04CYG7MEKB' # Edward's Slackbot Dev Workspace
-    return 'U02780B5563' # awakened
+    return 'U04CYG7MEKB' # Edward's Slackbot Dev Workspace
 
 
 def get_subscribed_users():
