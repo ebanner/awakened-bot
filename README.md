@@ -1,8 +1,8 @@
 # 💥 awakened-bot
 
-Slack bot for r/awakened Slack group
+Slack bot for r/awakened group
 
-<img width="1392" alt="image" src="https://user-images.githubusercontent.com/2068912/207391084-726dbb59-6386-4965-b90f-41c1109d620d.png">
+<img src='https://github.com/ebanner/awakened-bot/assets/2068912/c459702b-018b-4b31-969e-c252d7a2f711' width='400'>
 
 ## Features
 
