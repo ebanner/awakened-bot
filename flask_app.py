@@ -161,11 +161,12 @@ def process_emoji_added(event):
 
 
 def process_alias_added(event):
-    alias_name = event['name']
-    emoji_name = event['value'].lstrip('alias:')
-    tell(DESTINATION_CHANNEL, f'New alias added!')
-    tell(DESTINATION_CHANNEL, f'`:{alias_name}:` → `:{emoji_name}:`')
-    tell(DESTINATION_CHANNEL, f':{emoji_name}:')
+    pass
+    # alias_name = event['name']
+    # emoji_name = event['value'].lstrip('alias:')
+    # tell(DESTINATION_CHANNEL, f'New alias added!')
+    # tell(DESTINATION_CHANNEL, f'`:{alias_name}:` → `:{emoji_name}:`')
+    # tell(DESTINATION_CHANNEL, f':{emoji_name}:')
 
 
 def is_emoji_added_event(event):
