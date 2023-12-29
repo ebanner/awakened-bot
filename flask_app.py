@@ -5,9 +5,8 @@ import json
 import urllib.request
 
 import logging
-logging.basicConfig()
-logging.root.setLevel(logging.NOTSET)
-logging.basicConfig(level=logging.NOTSET)
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -148,7 +147,7 @@ def tell_subscribed_user(subscribed_user, event):
     message, emoji_name = get_message(event), get_emoji_name(event)
     reactor = get_reactor(event)
     reactor_name = get_author_name(reactor)
-    logging.info(
+    logger.info(
         'AddedToYourEmojiEvent',
         extra={
             'author': subscribed_user,
