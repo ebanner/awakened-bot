@@ -4,12 +4,17 @@ import sys
 import json
 import urllib.request
 
+import logging
+logging.basicConfig()
+logging.root.setLevel(logging.NOTSET)
+logging.basicConfig(level=logging.NOTSET)
+
 from dotenv import load_dotenv
 load_dotenv()
 
+
 TOKEN = os.environ.get("DEV_TOKEN")
 DESTINATION_CHANNEL = 'general'
-
 
 SUBSCRIBED_USERS = [
     'U04CYG7MEKB' # @edward.banner (Edward's Slackbot Dev Workspace)
@@ -42,6 +47,13 @@ def get_subscribed_users():
 
 def get_reactor(event):
     return event['user']
+
+
+def get_channel(event):
+    item = event['item']
+    assert item['type'] == 'message'
+    msg = item
+    return msg['channel']
 
 
 def get_message(event):
@@ -136,6 +148,15 @@ def tell_subscribed_user(subscribed_user, event):
     message, emoji_name = get_message(event), get_emoji_name(event)
     reactor = get_reactor(event)
     reactor_name = get_author_name(reactor)
+    logging.info(
+        'AddedToYourEmojiEvent',
+        extra={
+            'author': subscribed_user,
+            'reactor': reactor,
+            'emoji': emoji_name,
+            'channel': get_channel(event),
+        }
+    )
     message = get_text(reactor_name, emoji_name, message['link'])
     tell(channel=subscribed_user, text=message)
     return {
