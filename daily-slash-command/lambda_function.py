@@ -20,7 +20,6 @@ def get_response_url(event):
 
 def lambda_handler(event, context):
     response_url = get_response_url(event)
-    
 
     response = requests.post(
         response_url,
