@@ -1,6 +1,6 @@
-# 💥 awakened-bot
+# emoji-reaction-notifier
 
-Slack bot for r/awakened group
+Get alerted when someone adds to your emoji reaction
 
 ## Features
 
