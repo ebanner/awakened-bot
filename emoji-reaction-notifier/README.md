@@ -1,6 +1,6 @@
 # emoji-reaction-notifier
 
-Get alerted when someone adds to your emoji reaction
+Emoji features
 
 ## Features
 
