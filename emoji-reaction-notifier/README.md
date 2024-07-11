@@ -23,6 +23,6 @@ https://api.slack.com/apps/A04CKTX53EF
 
 <img width="1015" alt="image" src="https://github.com/ebanner/awakened-bot/assets/2068912/3580e7c5-abae-4054-ae56-dcd745df7b94">
 
-## Slack
+## On Slack
 
 ![image](https://github.com/user-attachments/assets/b076dc74-91de-405e-b591-53b0e4705e0b)
