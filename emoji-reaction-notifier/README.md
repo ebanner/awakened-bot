@@ -1,6 +1,6 @@
 # emoji-reaction-notifier
 
-Emoji features
+Emoji stuff
 
 ## Features
 
