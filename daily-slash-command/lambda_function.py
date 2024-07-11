@@ -6,6 +6,9 @@ import json
 import requests
 
 
+DAILIES_THREAD_NAME = ":wordle2: :connections2: :mini: :plusword:"
+
+
 def get_response_url(event):
     body_base64_encoded = event['body']
     body_bytes = base64.b64decode(body_base64_encoded)
@@ -18,16 +21,14 @@ def get_response_url(event):
 def lambda_handler(event, context):
     response_url = get_response_url(event)
     
-    headers = {
-        "Content-Type": "application/json"
-    }
-    data = {
-        "text": ":wordle2: :connections2: :mini: :plusword:",
-        "response_type": "in_channel",
-    }
-    response = requests.post(response_url, headers=headers, data=json.dumps(data))
-    
-    print(response.status_code)
-    print(response.text)
+
+    response = requests.post(
+        response_url,
+        headers={"Content-Type": "application/json"},
+        data=json.dumps({
+            "text": DAILIES_THREAD_NAME,
+            "response_type": "in_channel",
+        })
+    )
     
     return ''
