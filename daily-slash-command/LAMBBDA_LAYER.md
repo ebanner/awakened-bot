@@ -1,4 +1,4 @@
-## Making a Lambda Layer
+# Making a Lambda Layer
 
 Create a new virtual environment
 
