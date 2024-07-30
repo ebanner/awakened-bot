@@ -27,7 +27,7 @@ Zip up python directory
 OR 
 
 ```
-zip -r archive_name.zip directory_name
+zip -r python.zip python
 ```
 
 Select compatible runtimes
