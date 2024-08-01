@@ -30,6 +30,10 @@ OR
 zip -r python.zip python
 ```
 
+Create the lambda layer
+
+<img width="1445" alt="image" src="https://github.com/user-attachments/assets/1f9f13ff-e605-4d00-88a4-29fda4b9a020">
+
 Select compatible runtimes
 
 ![image](https://github.com/ebanner/awakened-bot/assets/2068912/7eb563d3-06bd-4b25-8785-84573eed7a7c)
