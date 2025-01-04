@@ -144,28 +144,73 @@ def is_slash_command(event):
     if 'isBase64Encoded' not in event or not event['isBase64Encoded']:
         return False
 
-    print(event)
-
     body_dict = get_body_dict(event)
     return body_dict['command'] == '/fnh'
+
+def is_participant_joined_event(event):
+    body_json = event['body']
+    body = json.loads(body_json)
+    return body['event'] == 'participant_joined'
+
+def is_participant_left_event(event):
+    body_json = event['body']
+    body = json.loads(body_json)
+    return body['event'] == 'participant_left'
+
+
+def get_user_name(event):
+    body_json = event['body']
+    body = json.loads(body_json)
+    return body['user_name']
+
+
+def end_call(call_id):
+    slack_client.calls_end(
+        id=call_id
+    )
+
+def get_slash_text(event, default='begin'):
+    body_base64_encoded = event['body']
+    body_bytes = base64.b64decode(body_base64_encoded)
+    body_decoded = body_bytes.decode('utf-8')
+    body_dict = dict(urllib.parse.parse_qsl(body_decoded))
+    text = body_dict.get('text', default)
+    return text
 
 
 def lambda_handler(event, context):
     if is_slash_command(event):
-        print('slash command')
-        call_id = register_call_with_slack()
-        post_call_to_channel(call_id)
-        put('call_id', call_id)
-    elif is_participant_joined_event(event):
-        print('participant joined')
-        # user_name = get_user_name(event)
-        # add_participant_to_call(user_name)
-    elif is_participant_left_event(event):
-        # user_name = get_user_name(event)
-        print('participant left') 
+        slash_text = get_slash_text(event)
+        if slash_text == 'begin':
+            call_id = register_call_with_slack()
+            post_call_to_channel(call_id)
+            put('call_id', call_id)
+            return {
+                'statusCode': 200,
+                'body': call_id
+            }
+        else:
+            assert slash_text == 'end'
+            call_id = get('call_id')
+            end_call(call_id)
+            return {
+                'statusCode': 200,
+                'body': call_id
+            }
 
-    return {
-        'statusCode': 200,
-        'body': ''
-    }
+    elif is_participant_joined_event(event):
+        user_name = get_user_name(event)
+        add_participant_to_call(user_name)
+        return {
+            'statusCode': 200,
+            'body': 'ok'
+        }
+
+    elif is_participant_left_event(event):
+        user_name = get_user_name(event)
+        remove_participant_from_call(user_name)
+        return {
+            'statusCode': 200,
+            'body': 'ok'
+        }
 
