@@ -92,16 +92,9 @@ def post_call_to_channel(call_id):
     return response.data
 
 
-def add_participant_to_call(user_name):
+def add_participant_to_call(user):
     users = [
-        # { 
-        #     "slack_id": "U04CYG7MEKB"
-        # }, 
-        {   
-            "external_id": "54321678",
-            "display_name": user_name,
-            # "avatar_url": "https://example.com/users/avatar1234.jpg"
-        }   
+        user
     ]   
 
     call_id = get('call_id')
@@ -113,16 +106,9 @@ def add_participant_to_call(user_name):
     return response.data
 
 
-def remove_participant_from_call(user_name):
+def remove_participant_from_call(user):
     users = [ 
-        # { 
-        #     "slack_id": "U04CYG7MEKB"
-        # }, 
-        {   
-            "external_id": "54321678",
-            "display_name": user_name,
-            # "avatar_url": "https://example.com/users/avatar1234.jpg"
-        }   
+        user
     ]   
     call_id = get('call_id')
     response = slack_client.calls_participants_remove(
@@ -147,10 +133,12 @@ def is_slash_command(event):
     body_dict = get_body_dict(event)
     return body_dict['command'] == '/fnh'
 
+
 def is_participant_joined_event(event):
     body_json = event['body']
     body = json.loads(body_json)
     return body['event'] == 'participant_joined'
+
 
 def is_participant_left_event(event):
     body_json = event['body']
@@ -158,10 +146,27 @@ def is_participant_left_event(event):
     return body['event'] == 'participant_left'
 
 
-def get_user_name(event):
+def get_user(event):
+    DISCORD_TO_SLACK_MAP = {
+        'edward4346': 'U04CYG7MEKB'
+    }
+
     body_json = event['body']
     body = json.loads(body_json)
-    return body['user_name']
+    discord_user_name = body['user_name']
+
+    if discord_user_name in DISCORD_TO_SLACK_MAP:
+        user = { 
+            "slack_id": "U04CYG7MEKB"
+        }
+    else:
+        user = {   
+            "external_id": discord_user_name,
+            "display_name": discord_user_name,
+            # "avatar_url": "https://example.com/users/avatar1234.jpg"
+        }
+
+    return user
 
 
 def end_call(call_id):
@@ -199,16 +204,16 @@ def lambda_handler(event, context):
             }
 
     elif is_participant_joined_event(event):
-        user_name = get_user_name(event)
-        add_participant_to_call(user_name)
+        user = get_user(event)
+        add_participant_to_call(user)
         return {
             'statusCode': 200,
             'body': 'ok'
         }
 
     elif is_participant_left_event(event):
-        user_name = get_user_name(event)
-        remove_participant_from_call(user_name)
+        user = get_user(event)
+        remove_participant_from_call(user)
         return {
             'statusCode': 200,
             'body': 'ok'
