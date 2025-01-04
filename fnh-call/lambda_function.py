@@ -187,7 +187,7 @@ def lambda_handler(event, context):
             put('call_id', call_id)
             return {
                 'statusCode': 200,
-                'body': call_id
+                'body': ''
             }
         else:
             assert slash_text == 'end'
@@ -195,7 +195,7 @@ def lambda_handler(event, context):
             end_call(call_id)
             return {
                 'statusCode': 200,
-                'body': call_id
+                'body': ''
             }
 
     elif is_participant_joined_event(event):
