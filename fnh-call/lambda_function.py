@@ -10,9 +10,9 @@ from botocore.exceptions import ClientError
 from slack_sdk import WebClient
 
 
-SLACKBOT_TOKEN_NAME = 'EDWARDS_SLACKBOT_DEV_WORKSPACE_TOKEN'
+SLACKBOT_TOKEN_NAME = 'AWAKENED_SLACK_BOT_TOKEN' #'EDWARDS_SLACKBOT_DEV_WORKSPACE_TOKEN'
 
-CHANNEL_ID = 'general'
+CHANNEL_ID = 'U02780B5563' #'general'
 
 s3 = boto3.client('s3')
 
@@ -66,8 +66,8 @@ def get(key):
 def register_call_with_slack():
     response = slack_client.calls_add(
         external_unique_id='foobar',
-        join_url='https://discord.com/channels/974552137780584528/974553089765961758',
-        desktop_app_join_url='discord:///channels/974552137780584528/974553089765961758',
+        join_url='https://discord.com/channels/767118316526764053/1172970508988461186',
+        desktop_app_join_url='discord:///channels/767118316526764053/1172970508988461186',
         title='Friday Night Hangout',
     )
 
@@ -147,9 +147,15 @@ def is_participant_left_event(event):
 
 
 def get_user(event):
-    DISCORD_TO_SLACK_MAP = {
-        'edward4346': 'U04CYG7MEKB'
-    }
+    if SLACKBOT_TOKEN_NAME == 'AWAKENED_SLACK_BOT_TOKEN':
+        DISCORD_TO_SLACK_MAP = {
+            'edward4346': 'U02780B5563'
+        }
+    else:
+        assert SLACKBOT_TOKEN_NAME == 'EDWARDS_SLACKBOT_DEV_WORKSPACE_TOKEN'
+        DISCORD_TO_SLACK_MAP = {
+            'edward4346': 'U04CYG7MEKB'
+        }
 
     body_json = event['body']
     body = json.loads(body_json)
@@ -157,7 +163,7 @@ def get_user(event):
 
     if discord_user_name in DISCORD_TO_SLACK_MAP:
         user = { 
-            "slack_id": "U04CYG7MEKB"
+            "slack_id": DISCORD_TO_SLACK_MAP[discord_user_name]
         }
     else:
         user = {   
