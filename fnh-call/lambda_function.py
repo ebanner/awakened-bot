@@ -10,13 +10,35 @@ from botocore.exceptions import ClientError
 from slack_sdk import WebClient
 
 
-SLACKBOT_TOKEN_NAME = 'AWAKENED_SLACK_BOT_TOKEN' #'EDWARDS_SLACKBOT_DEV_WORKSPACE_TOKEN'
+lambda_client = boto3.client('lambda', region_name='us-east-1')
 
-CHANNEL_ID = 'U02780B5563' #'general'
+SLACKBOT_TOKEN_NAME = 'AWAKENED_SLACK_BOT_TOKEN'
+CHANNEL_ID = 'chopping-wood'
+# CHANNEL_ID = 'U02780B5563'
+
+# SLACKBOT_TOKEN_NAME = 'EDWARDS_SLACKBOT_DEV_WORKSPACE_TOKEN'
+# CHANNEL_ID = 'general'
 
 s3 = boto3.client('s3')
 
 BUCKET = 'storage9'
+
+if SLACKBOT_TOKEN_NAME == 'AWAKENED_SLACK_BOT_TOKEN':
+    DISCORD_TO_SLACK_MAP = {
+        'edward4346': 'U02780B5563',
+        'katherine5510': 'UEH585CJE',
+        '.ruitorres': 'U778VCCTS',
+        'scoliosisyphus': 'U1CK5QKPT',
+        'abhayance': 'U0XTHU2LR',
+        'grant_sachs': 'U01EKNT75EZ',
+        # 'srguile': 'U778VCCTS',
+    }
+elif SLACKBOT_TOKEN_NAME == 'EDWARDS_SLACKBOT_DEV_WORKSPACE_TOKEN':
+    DISCORD_TO_SLACK_MAP = {
+        'edward4346': 'U04CYG7MEKB'
+    }
+else:
+    raise Error('Invalid slackbot token name')
 
 
 def get_slack_token(slackbot_token_name):
@@ -63,35 +85,6 @@ def get(key):
     return value
 
 
-def register_call_with_slack():
-    response = slack_client.calls_add(
-        external_unique_id='foobar',
-        join_url='https://discord.com/channels/767118316526764053/1172970508988461186',
-        desktop_app_join_url='discord:///channels/767118316526764053/1172970508988461186',
-        title='Friday Night Hangout',
-    )
-
-    call_id = response.data['call']['id']
-
-    return call_id
-
-
-def post_call_to_channel(call_id):
-    blocks = [
-        {
-            'type': 'call',
-            'call_id': call_id
-        }
-    ]
-
-    response = slack_client.chat_postMessage(
-        channel=CHANNEL_ID,
-        blocks=blocks,
-    )
-
-    return response.data
-
-
 def add_participant_to_call(user):
     users = [
         user
@@ -131,32 +124,26 @@ def is_slash_command(event):
         return False
 
     body_dict = get_body_dict(event)
-    return body_dict['command'] == '/fnh'
+    return body_dict['command'].startswith('/')
 
 
 def is_participant_joined_event(event):
+    if 'body' not in event:
+        return False
     body_json = event['body']
     body = json.loads(body_json)
     return body['event'] == 'participant_joined'
 
 
 def is_participant_left_event(event):
+    if 'body' not in event:
+        return False
     body_json = event['body']
     body = json.loads(body_json)
     return body['event'] == 'participant_left'
 
 
 def get_user(event):
-    if SLACKBOT_TOKEN_NAME == 'AWAKENED_SLACK_BOT_TOKEN':
-        DISCORD_TO_SLACK_MAP = {
-            'edward4346': 'U02780B5563'
-        }
-    else:
-        assert SLACKBOT_TOKEN_NAME == 'EDWARDS_SLACKBOT_DEV_WORKSPACE_TOKEN'
-        DISCORD_TO_SLACK_MAP = {
-            'edward4346': 'U04CYG7MEKB'
-        }
-
     body_json = event['body']
     body = json.loads(body_json)
     discord_user_name = body['user_name']
@@ -173,37 +160,48 @@ def get_user(event):
         }
 
     return user
+    
 
-
-def end_call(call_id):
-    slack_client.calls_end(
-        id=call_id
-    )
-
-def get_slash_text(event, default='begin'):
+def get_slash_text(event):
     body_base64_encoded = event['body']
     body_bytes = base64.b64decode(body_base64_encoded)
     body_decoded = body_bytes.decode('utf-8')
     body_dict = dict(urllib.parse.parse_qsl(body_decoded))
-    text = body_dict.get('text', default)
+    text = body_dict.get('text', '')
     return text
+
+
+def kick_off_background_lambda(call_name):
+    response = lambda_client.invoke(
+        FunctionName='friday-night-hangout-background',
+        InvocationType='Event',
+        Payload=json.dumps({
+            'call_name': call_name,
+        })
+    )
+
+    print(response)
 
 
 def lambda_handler(event, context):
     if is_slash_command(event):
         slash_text = get_slash_text(event)
-        if slash_text == 'begin':
-            call_id = register_call_with_slack()
-            post_call_to_channel(call_id)
-            put('call_id', call_id)
+        if slash_text == '':
             return {
                 'statusCode': 200,
-                'body': ''
+                'body': 'You need to specify an event name `/event [name|end]`'
+            }
+        elif slash_text != 'end':
+            call_name = slash_text
+            kick_off_background_lambda(call_name)
+            return {
+                'statusCode': 200,
+                'body': f'Starting {call_name} call (will take about 30 seconds)...'
             }
         else:
             assert slash_text == 'end'
-            call_id = get('call_id')
-            end_call(call_id)
+            call_name = slash_text
+            kick_off_background_lambda(call_name)
             return {
                 'statusCode': 200,
                 'body': ''
