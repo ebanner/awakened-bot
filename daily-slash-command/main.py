@@ -6,20 +6,22 @@ import pandas as pd
 
 cloudwatch_client = boto3.client('logs')
 
+LOG_GROUP_NAME = '/aws/lambda/awakened-bot-daily-slash-command'
+
 
 def get_logs():
-    log_group_name = '/aws/lambda/daily-slash-command-test'
     query_string = """
     fields @timestamp, slashCommand, slashText, userId, userName, channelId, channelName
     | filter eventName = "DailySlashCommand"
     | sort @timestamp desc
     | limit 10000
     """
+
     start_time = int((time.time() - 3600) * 1000)  # Start time (1 hour ago)
     end_time = int(time.time() * 1000)  # End time (current time)
 
     response = cloudwatch_client.start_query(
-        logGroupName=log_group_name,
+        logGroupName=LOG_GROUP_NAME,
         startTime=start_time,
         endTime=end_time,
         queryString=query_string
