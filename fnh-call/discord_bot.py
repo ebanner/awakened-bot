@@ -25,6 +25,7 @@ def emit_participant_joined_event(user_name):
             'Content-Type': 'application/json'
         }
     )
+    print(response.text)
     return response.text
 
 
@@ -39,6 +40,21 @@ def emit_participant_left_event(user_name):
             'Content-Type': 'application/json'
         }
     )
+    print(response.text)
+    return response.text
+
+
+def emit_end_call_event():
+    response = requests.post(
+        LAMBDA_URL,
+        data=json.dumps({
+            'event': 'end_call',
+        }),
+        headers={
+            'Content-Type': 'application/json'
+        }
+    )
+    print(response.text)
     return response.text
 
 
@@ -62,15 +78,19 @@ async def on_voice_state_update(member, before, after):
 
     if is_join_event(before, after):
         user_name = member.name
-        response = emit_participant_joined_event(user_name)
-        print(response)
+        emit_participant_joined_event(user_name)
 
     elif is_leave_event(before, after):
         user_name = member.name
-        response = emit_participant_left_event(user_name)
-        print(response)
+        emit_participant_left_event(user_name)
+
+        num_members = len(before.channel.members)
+        if num_members == 0:
+            emit_end_call_event()
 
 
 if __name__ == '__main__':
-    DISCORD_BOT_TOKEN = os.environ['DISCORD_BOT_TOKEN']
-    discord_client.run(DISCORD_BOT_TOKEN)
+    # DISCORD_BOT_TOKEN = os.environ['DISCORD_BOT_TOKEN']
+    discord_bot_token = get_secret('DISCORD_BOT_TOKEN', 'DISCORD_BOT_TOKEN')
+    discord_client.run(discord_bot_token)
+
