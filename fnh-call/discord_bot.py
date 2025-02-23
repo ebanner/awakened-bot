@@ -1,10 +1,10 @@
 import os
+import json
+import requests
 
 import discord
 
-import requests
-
-import json
+import boto3
 
 
 from dotenv import load_dotenv
@@ -12,6 +12,17 @@ load_dotenv()
 
 
 LAMBDA_URL = os.environ['LAMBDA_URL']
+secrets_client = boto3.client("secretsmanager")
+
+def get_secret(secret_name, secret_key=None):
+    response = secrets_client.get_secret_value(SecretId=secret_name)
+    result = response['SecretString']
+    secrets = json.loads(result)
+
+    if secret_key:
+        return secrets[secret_key]
+    else:
+        return secrets
 
 
 def emit_participant_joined_event(user_name):
