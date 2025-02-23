@@ -91,10 +91,15 @@ def add_participant_to_call(user):
     ]   
 
     call_id = get('call_id')
+
+    print('call_id', call_id)
+
     response = slack_client.calls_participants_add(
         id=call_id,
         users=users
     )   
+
+    print(response.data)
 
     return response.data
 
@@ -103,11 +108,17 @@ def remove_participant_from_call(user):
     users = [ 
         user
     ]   
+    
     call_id = get('call_id')
+
+    print('call_id', call_id)
+
     response = slack_client.calls_participants_remove(
         id=call_id,
         users=users
     )
+
+    print(response.data)
 
     return response.data
 
@@ -159,6 +170,8 @@ def get_user(event):
             # "avatar_url": "https://example.com/users/avatar1234.jpg"
         }
 
+    print(user)
+
     return user
     
 
@@ -184,6 +197,17 @@ def kick_off_background_lambda(call_name):
 
 
 def lambda_handler(event, context):
+    def get_body_dict(event):
+        body_base64_encoded = event['body']
+        body_bytes = base64.b64decode(body_base64_encoded)
+        body_decoded = body_bytes.decode('utf-8')
+        body_dict = dict(urllib.parse.parse_qsl(body_decoded))
+        return body_dict
+
+    if 'isBase64Encoded' in event and event['isBase64Encoded']:
+        body_dict = get_body_dict(event)
+        print(body_dict)
+    
     if is_slash_command(event):
         slash_text = get_slash_text(event)
         if slash_text == '':

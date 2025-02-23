@@ -108,6 +108,8 @@ def post_call_to_channel(call_id):
         blocks=blocks,
     )
 
+    print(response.data)
+
     return response.data
 
 
@@ -137,6 +139,8 @@ def get_call_name(event):
 
 
 def lambda_handler(event, context):
+    print(event)
+
     call_name = get_call_name(event)
     
     if call_name == 'end':
@@ -149,6 +153,9 @@ def lambda_handler(event, context):
             time.sleep(1)
             print('.')
         call_id = register_call_with_slack(call_name)
+
+        print('call_id', call_id)
+
         post_call_to_channel(call_id)
         put('call_id', call_id)
 
