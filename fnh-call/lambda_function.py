@@ -9,11 +9,11 @@ from botocore.exceptions import ClientError
 
 from slack_sdk import WebClient
 
-
 lambda_client = boto3.client('lambda', region_name='us-east-1')
 
 SLACKBOT_TOKEN_NAME = 'AWAKENED_SLACK_BOT_TOKEN'
 CHANNEL_ID = 'chopping-wood'
+ecs_client = boto3.client('ecs')
 # CHANNEL_ID = 'U02780B5563'
 
 # SLACKBOT_TOKEN_NAME = 'EDWARDS_SLACKBOT_DEV_WORKSPACE_TOKEN'
@@ -31,6 +31,8 @@ if SLACKBOT_TOKEN_NAME == 'AWAKENED_SLACK_BOT_TOKEN':
         'scoliosisyphus': 'U1CK5QKPT',
         'abhayance': 'U0XTHU2LR',
         'grant_sachs': 'U01EKNT75EZ',
+        'aximilli': 'U012JP811UJ',
+        'haveanicedavid': 'U246YJFFA',
         # 'srguile': 'U778VCCTS',
     }
 elif SLACKBOT_TOKEN_NAME == 'EDWARDS_SLACKBOT_DEV_WORKSPACE_TOKEN':
@@ -108,7 +110,7 @@ def remove_participant_from_call(user):
     users = [ 
         user
     ]   
-    
+
     call_id = get('call_id')
 
     print('call_id', call_id)
@@ -144,6 +146,14 @@ def is_participant_joined_event(event):
     body_json = event['body']
     body = json.loads(body_json)
     return body['event'] == 'participant_joined'
+
+
+def is_end_call_event(event):
+    if 'body' not in event:
+        return False
+    body_json = event['body']
+    body = json.loads(body_json)
+    return body['event'] == 'end_call'
 
 
 def is_participant_left_event(event):
@@ -196,6 +206,26 @@ def kick_off_background_lambda(call_name):
     print(response)
 
 
+def update_ecs_service(desired_count):
+    response = ecs_client.update_service(
+        cluster="test2",
+        service="test5",
+        desiredCount=desired_count
+    )
+
+    print(response)
+
+
+def end_call(call_id):
+    update_ecs_service(desired_count=0)
+
+    response = slack_client.calls_end(
+        id=call_id
+    )
+
+    print(response)
+
+
 def lambda_handler(event, context):
     def get_body_dict(event):
         body_base64_encoded = event['body']
@@ -207,6 +237,8 @@ def lambda_handler(event, context):
     if 'isBase64Encoded' in event and event['isBase64Encoded']:
         body_dict = get_body_dict(event)
         print(body_dict)
+    else:
+        print(event)
     
     if is_slash_command(event):
         slash_text = get_slash_text(event)
@@ -246,4 +278,9 @@ def lambda_handler(event, context):
             'statusCode': 200,
             'body': 'ok'
         }
+
+    elif is_end_call_event(event):
+        call_id = get('call_id')
+        end_call(call_id)
+
 
