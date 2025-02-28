@@ -1,12 +1,49 @@
+import json
 import boto3
 import time
 
 import pandas as pd
 
+import gspread
+from gspread_dataframe import set_with_dataframe
+
 
 cloudwatch_client = boto3.client('logs')
 
 LOG_GROUP_NAME = '/aws/lambda/awakened-bot-daily-slash-command'
+
+
+def get_credentials_dict():
+    secret_name = "AWAKENED_DAILY_SLASH_COMMAND_ETL"
+    region_name = "us-east-1"
+
+    # Create a Secrets Manager client
+    session = boto3.session.Session()
+    client = session.client(
+        service_name='secretsmanager',
+        region_name=region_name
+    )
+
+    try:
+        get_secret_value_response = client.get_secret_value(
+            SecretId=secret_name
+        )
+    except ClientError as e:
+        # For a list of exceptions thrown, see
+        # https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
+        raise e
+
+    secret = get_secret_value_response['SecretString']
+
+    secret_dict = json.loads(secret)
+
+    credentials_dict = json.loads(secret_dict['SERVICE_ACCOUNT_KEY_JSON'])
+
+    return credentials_dict
+
+
+credentials_dict = get_credentials_dict()
+gsheets_client = gspread.service_account_from_dict(credentials_dict)
 
 
 def get_logs():
@@ -17,7 +54,7 @@ def get_logs():
     | limit 10000
     """
 
-    start_time = int((time.time() - 3600) * 1000)  # Start time (1 hour ago)
+    start_time = int((time.time() - 3*3600) * 1000)  # Start time (1 hour ago)
     end_time = int(time.time() * 1000)  # End time (current time)
 
     response = cloudwatch_client.start_query(
@@ -108,4 +145,17 @@ if __name__ == '__main__':
     logs = get_logs()
     df = get_df(logs)
     print(df)
+
+    #
+    # Looker UI
+    #
+    df['full_command'] = df.apply(
+        lambda row: row['slash_command'] + (row['slash_text'] if row['slash_text'] else ' '),
+        axis=1
+    )
+
+    spreadsheet = gsheets_client.open('Awakened Daily Slash Command')
+    worksheet = spreadsheet.worksheet('Sheet1')
+    worksheet.clear()
+    set_with_dataframe(worksheet, df)
 
