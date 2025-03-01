@@ -12,6 +12,8 @@ import requests
 import asyncio
 import aiohttp
 
+import sqlite3
+
 from emojis import EMOJIS
 
 
@@ -43,6 +45,28 @@ async def get_random_word():
         result = await response.json()
     random_word = result['word'].upper()
     return random_word
+
+
+def get_today_song():
+    def get_num_songs(cursor):
+        cursor.execute("SELECT COUNT(*) FROM songs")
+        num_songs, = cursor.fetchone()
+        return num_songs
+        
+    def get_day_index():
+        day_str = datetime.now().strftime("%Y%m%d")
+        day_index = int(day_str)
+        return day_index
+        
+    with sqlite3.connect("awakened_songs.db") as conn:
+        cursor = conn.cursor()
+        num_songs = get_num_songs(cursor)
+        day_index = get_day_index()
+        
+        cursor.execute("SELECT * FROM songs WHERE [index] = ?", (day_index % num_songs,))
+        index, title, url = cursor.fetchone()
+
+        return index, title, url
 
 
 def get_day():
@@ -164,6 +188,7 @@ def get_eddie_blocks():
     date = get_date()
     loop = asyncio.get_event_loop()
     print('Making API calls')
+    _, song_title, song_url = get_today_song()
     today_event_str, random_word, wordle_lotd, wiby_url = loop.run_until_complete(
         asyncio.gather(
             get_today_event_str(),
@@ -247,14 +272,14 @@ def get_eddie_blocks():
                     "type": "plain_text",
                     "text": random_word
                 },
-                {
-                    "type": "mrkdwn",
-                    "text": "*Letter*"
-                },
-                {
-                    "type": "plain_text",
-                    "text": wordle_lotd
-                },
+                # {
+                #     "type": "mrkdwn",
+                #     "text": "*Letter*"
+                # },
+                # {
+                #     "type": "plain_text",
+                #     "text": wordle_lotd
+                # },
                 {
                     "type": "mrkdwn",
                     "text": "*Emoji*"
@@ -270,6 +295,14 @@ def get_eddie_blocks():
                 {
                     "type": "mrkdwn",
                     "text": wiby_url,
+                },
+                {
+                    "type": "mrkdwn",
+                    "text": "*song*"
+                },
+                {
+                    "type": "mrkdwn",
+                    "text": f"<{song_url}|{song_title}>",
                 },
             ]
         },
@@ -291,7 +324,12 @@ def get_thread_blocks(slash_text):
         blocks = get_abhay_blocks()
     else:
         blocks = get_eddie_blocks()
-    return {"blocks": blocks, "response_type": "in_channel"}
+    return {
+        "blocks": blocks,
+        "response_type": "in_channel",
+        "unfurl_links": False,
+        "unfurl_media": False
+    }
 
 
 def lambda_handler(event, context):
