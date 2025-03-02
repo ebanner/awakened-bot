@@ -10,6 +10,9 @@ import boto3
 from dotenv import load_dotenv
 load_dotenv()
 
+import asyncio
+
+
 
 LAMBDA_URL = os.environ['LAMBDA_URL']
 secrets_client = boto3.client("secretsmanager")
@@ -97,7 +100,15 @@ async def on_voice_state_update(member, before, after):
 
         num_members = len(before.channel.members)
         if num_members == 0:
-            emit_end_call_event()
+            asyncio.create_task(wait_maybe_end_call(before.channel))
+
+
+async def wait_maybe_end_call(channel):
+    await asyncio.sleep(60)
+
+    num_members = len(channel.members)
+    if num_members == 0:
+        emit_end_call_event()
 
 
 if __name__ == '__main__':
