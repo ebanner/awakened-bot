@@ -79,7 +79,21 @@ discord_client = discord.Client(intents=intents)
 
 @discord_client.event
 async def on_ready():
-    print('Ready!')
+    def get_awakened_guild(guilds):
+        for guild in guilds:
+            if guild.name == "Press A to Awaken":
+                return guild
+
+    def get_space_voice_channel(voice_channels):
+        for voice_channel in voice_channels:
+            if voice_channel.name == "Space":
+                return voice_channel
+
+    awakened_guild = get_awakened_guild(discord_client.guilds)
+    space_voice_channel = get_space_voice_channel(awakened_guild.voice_channels)
+
+    for member in space_voice_channel.members:
+        emit_participant_joined_event(member.name)
 
 
 @discord_client.event
