@@ -56,12 +56,9 @@ def get_user_agent(event):
 def lambda_handler(event, context):
     user_agent = get_user_agent(event)
     if user_agent == 'Slackbot-LinkExpanding 1.0 (+https://api.slack.com/robots)':
-        print('MATCHED USER_AGENT')
         return {
             "statusCode": 200
         }
-    else:
-        print(f"DIDN'T MATCH USER_AGENT: {user_agent}")
 
     url = get_slash_text(event)
     if url:
