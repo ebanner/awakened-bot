@@ -68,79 +68,6 @@ def lambda_handler(event, context):
         put('wapo-url', url)
         lambda_url = os.environ["LAMBDA_URL"]
 
-        # message_blocks = {
-        #     "blocks" [
-        #         {
-        # "type": "rich_text",
-        # "block_id": "block1",
-        # "elements": [
-        #     {
-        #     "type": "rich_text_section",
-        #     "elements": [
-        #         {
-        #         "type": "text",
-        #         "text": "My favorite Slack features (in no particular order):"
-        #         }
-        #     ]
-        #     },
-        #     {
-        #     "type": "rich_text_list",
-        #     "elements": [
-        #         {
-        #         "type": "rich_text_section",
-        #         "elements": [
-        #             {
-        #             "type": "text",
-        #             "text": "Huddles"
-        #             }
-        #         ]
-        #         },
-        #         {
-        #         "type": "rich_text_section",
-        #         "elements": [
-        #             {
-        #             "type": "text",
-        #             "text": "Canvas"
-        #             }
-        #         ]
-        #         },
-        #         {
-        #         "type": "rich_text_section",
-        #         "elements": [
-        #             {
-        #             "type": "text",
-        #             "text": "Developing with Block Kit"
-        #             }
-        #         ]
-        #         }
-        #     ],
-        #     "style": "bullet",
-        #     "indent": 0,
-        #     "border": 1
-        #     },
-        # ],
-        # }]
-        # }
-
-        # message_blocks = {
-        #     "blocks": [
-        #         {
-        #             "type": "section",
-        #             "text": {
-        #                 "type": "mrkdwn",
-        #                 "text": f"<{url}|Collab crossword>"
-        #             }
-        #         },
-        #         {
-        #             "type": "section",
-        #             "text": {
-        #                 "type": "mrkdwn",
-        #                 "text": f"• <{lambda_url}/eddie|Eddie link>\n• <{lambda_url}/katherine|Katherine link>\n• <{lambda_url}/abhay|Abhay link>"
-        #             }
-        #         }
-        #     ]
-        # }
-
         message_blocks = {
             "blocks": [
                 {
@@ -206,28 +133,6 @@ def lambda_handler(event, context):
                 }
             ]
         }
-
-
-
-        # message_blocks = {
-        #     "blocks" [
-        #         {
-        #             "type": "rich_text",
-        #             "block_id": "block1",
-        #             "elements": [
-        #                 {
-        #                     "type": "rich_text_section",
-        #                     "elements": [
-        #                         {
-        #                             "type": "text",
-        #                             "text": "My favorite Slack features (in no particular order):"
-        #                         }
-        #                     ]
-        #                 },
-        #             ],
-        #         }
-        #     ]
-        # }
 
         return {
             "statusCode": 200,
