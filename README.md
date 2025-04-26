@@ -19,3 +19,7 @@ Slack bot for the r/awakened slack group
 ### Emoji upload alerts
 
 ![292650650-c81dba63-78c8-4648-93a8-ca7a0ebf21e9](https://github.com/user-attachments/assets/627213b5-c844-432f-8956-da9191aa0dd9)
+
+### `/crossword` command
+
+<img width="317" alt="image" src="https://github.com/user-attachments/assets/b92ae036-eea5-40a2-81d3-3f1d66b1d0ad" />
