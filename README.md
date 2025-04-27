@@ -14,11 +14,11 @@ Slack bot for the r/awakened slack group
 
 ### Reaction alerts
 
-<img height="700" src="https://github.com/user-attachments/assets/66762ca1-d8c5-413b-b32b-d34a96d3e89d" />
+<img width="400" src="https://github.com/user-attachments/assets/66762ca1-d8c5-413b-b32b-d34a96d3e89d" />
 
 ### Emoji upload alerts
 
-<img height="300" src="https://github.com/user-attachments/assets/627213b5-c844-432f-8956-da9191aa0dd9" />
+<img width="300" src="https://github.com/user-attachments/assets/627213b5-c844-432f-8956-da9191aa0dd9" />
 
 ### `/crossword` command
 
