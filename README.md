@@ -4,11 +4,11 @@ Slack bot for the r/awakened slack group
 
 ## Features
 
-### Discord voice room integration
+### `/event` Discord voice room command
 
 <img width="500" src="https://github.com/user-attachments/assets/6cc9eec0-adb4-4948-bfb5-12b063e09945" />
 
-### Daily games thread
+### `/daily` daily games thread command
 
 <img width="400" alt="Screenshot 2025-01-10 at 9 37 44 PM" src="https://github.com/user-attachments/assets/169f2666-b29c-40a7-9040-1951eba6455f" />
 
@@ -18,7 +18,8 @@ Slack bot for the r/awakened slack group
 
 ### Emoji upload alerts
 
-<img width="300" src="https://github.com/user-attachments/assets/627213b5-c844-432f-8956-da9191aa0dd9" />
+<img width="400" src="https://github.com/user-attachments/assets/02f55165-4405-4036-9f8f-f0a831f934fb" />
+
 
 ### `/crossword` command
 
