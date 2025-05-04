@@ -17,13 +17,38 @@ def get(key, bucket='storage9'):
     return value
 
 # SLACK_BOT_TOKEN = os.environ['EDWARDS_SLACKBOT_DEV_SLACK_BOT_TOKEN']
+# GAMES_CHANNEL_NAME = 'general'
+# GAMES_CHANNEL_ID = 'C04C5AVUMQF'
+
 SLACK_BOT_TOKEN = os.environ['AWAKENED_SLACK_BOT_TOKEN']
+GAMES_CHANNEL_NAME = 'games'
+GAMES_CHANNEL_ID = 'C4TC1CB3P'
+
 slack_client = WebClient(SLACK_BOT_TOKEN)
+
+NOTIFICATIONS_CHANNEL_NAME = 'crossword-alerts'
 
 def send_message(user):
     response = slack_client.chat_postMessage(
-        channel='crossword-alerts',
+        channel=NOTIFICATIONS_CHANNEL_NAME,
         text=f"{user} is playing :wapo:"
+    )
+
+def send_message_thread(user):
+    def get_latest_crossword_thread_ts():
+        response = slack_client.conversations_history(channel=GAMES_CHANNEL_ID, limit=10)
+        for message in response["messages"]:
+            if "Collab crossword" in message["text"]:
+                return message["ts"]
+
+    latest_crossword_thread_ts = get_latest_crossword_thread_ts()
+    if latest_crossword_thread_ts is None:
+        return
+
+    response = slack_client.chat_postMessage(
+        channel=GAMES_CHANNEL_NAME,
+        text=f"{user} is playing :wapo:",
+        thread_ts=latest_crossword_thread_ts
     )
 
 def get_slash_text(event):
@@ -131,20 +156,32 @@ def lambda_handler(event, context):
             ]
         }
 
+        response = slack_client.chat_postMessage(
+            channel=GAMES_CHANNEL_NAME,
+            blocks=message_blocks["blocks"]
+        )
+
         return {
-            "statusCode": 200,
-            "body": json.dumps(message_blocks),
-            "headers": {
-                "Content-Type": "application/json"
-            }
+            "statusCode": 200
         }
+
+        # return {
+        #     "statusCode": 200,
+        #     "body": json.dumps(message_blocks),
+        #     "headers": {
+        #         "Content-Type": "application/json"
+        #     }
+        # }
     
     if event.get('rawPath') == '/eddie':
-        send_message('Eddie')
+        # send_message('Eddie')
+        send_message_thread('Eddie')
     elif event.get('rawPath') == '/katherine':
-        send_message('Katherine')
+        # send_message('Katherine')
+        send_message_thread('Katherine')
     elif event.get('rawPath') == '/abhay':
-        send_message('Abhay')
+        # send_message('Abhay')
+        send_message_thread('Abhay')
 
     url = get('wapo-url')
     return {
