@@ -12,7 +12,6 @@ ecs_client = boto3.client('ecs')
 
 SLACKBOT_TOKEN_NAME = 'AWAKENED_SLACK_BOT_TOKEN'
 CHANNEL_ID = 'chopping-wood'
-# CHANNEL_ID = 'U02780B5563'
 
 # SLACKBOT_TOKEN_NAME = 'EDWARDS_SLACKBOT_DEV_WORKSPACE_TOKEN'
 # CHANNEL_ID = 'general'
@@ -82,9 +81,15 @@ def get_call_name(event):
     return call_name
 
 
+def replace_emojis(call_name):
+    call_name_with_emojis = call_name.replace(':coffee:', '☕️')
+    return call_name_with_emojis
+
+
 def register_call_with_slack(call_name):
+    call_name_with_emojis = replace_emojis(call_name)
     response = slack_client.calls_add(
-        title=call_name,
+        title=call_name_with_emojis,
         external_unique_id='foobar',
         join_url='https://discord.com/channels/767118316526764053/1172970508988461186',
         desktop_app_join_url='discord:///channels/767118316526764053/1172970508988461186',
