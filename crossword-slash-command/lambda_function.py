@@ -16,13 +16,13 @@ def get(key, bucket='storage9'):
     value = object['Body'].read().decode('utf-8')
     return value
 
-SLACK_BOT_TOKEN = os.environ['EDWARDS_SLACKBOT_DEV_SLACK_BOT_TOKEN']
-GAMES_CHANNEL_NAME = 'general'
-GAMES_CHANNEL_ID = 'C04C5AVUMQF'
+# SLACK_BOT_TOKEN = os.environ['EDWARDS_SLACKBOT_DEV_SLACK_BOT_TOKEN']
+# GAMES_CHANNEL_NAME = 'general'
+# GAMES_CHANNEL_ID = 'C04C5AVUMQF'
 
-# SLACK_BOT_TOKEN = os.environ['AWAKENED_SLACK_BOT_TOKEN']
-# GAMES_CHANNEL_NAME = 'games'
-# GAMES_CHANNEL_ID = 'C4TC1CB3P'
+SLACK_BOT_TOKEN = os.environ['AWAKENED_SLACK_BOT_TOKEN']
+GAMES_CHANNEL_NAME = 'games'
+GAMES_CHANNEL_ID = 'C4TC1CB3P'
 
 slack_client = WebClient(SLACK_BOT_TOKEN)
 
@@ -89,81 +89,102 @@ def get_user_agent(event):
     return None
 
 
-def handle_crossword_command(event):
+def handle_crossword_command(event, emoji=None):
     url = get_slash_text(event)
-    if url:
-        put('wapo-url', url)
-        lambda_url = os.environ["LAMBDA_URL"]
 
-        message_blocks = {
-            "blocks": [
-                {
-                    "type": "rich_text",
-                    "block_id": "block1",
-                    "elements": [
-                        {
-                            "type": "rich_text_section",
-                            "elements": [
-                                {
-                                    "type": "link",
-                                    "url": url,
-                                    "text": "Collab crossword"
-                                }
-                            ]
-                        },
-                        {
-                            "type": "rich_text_section",
-                            "elements": [
-                                {
-                                    "type": "text",
-                                    "text": " "
-                                }
-                            ]
-                        },
-                        {
-                            "type": "rich_text_list",
-                            "style": "bullet",
-                            "elements": [
-                                {
-                                    "type": "rich_text_section",
-                                    "elements": [
-                                        {
-                                            "type": "link",
-                                            "url": f"{lambda_url}/eddie",
-                                            "text": "Eddie link"
-                                        }
-                                    ]
-                                },
-                                {
-                                    "type": "rich_text_section",
-                                    "elements": [
-                                        {
-                                            "type": "link",
-                                            "url": f"{lambda_url}/katherine",
-                                            "text": "Katherine link"
-                                        }
-                                    ]
-                                },
-                                {
-                                    "type": "rich_text_section",
-                                    "elements": [
-                                        {
-                                            "type": "link",
-                                            "url": f"{lambda_url}/abhay",
-                                            "text": "Abhay link"
-                                        }
-                                    ]
-                                }
-                            ]
-                        },
-                    ],
-                }
-            ]
+    put('wapo-url', url)
+    lambda_url = os.environ["LAMBDA_URL"]
+
+    title_block = [
+        {
+            "type": "link",
+            "url": url,
+            "text": "Collab crossword"
         }
+    ]
+    if emoji:
+        title_block.extend([
+            {
+                "type": "text",
+                "text": " "
+            },
+            {
+                "type": "emoji",
+                "name": emoji
+            }
+        ])
 
+    message_blocks = {
+        "blocks": [
+            {
+                "type": "rich_text",
+                "block_id": "block1",
+                "elements": [
+                    {
+                        "type": "rich_text_section",
+                        "elements": title_block
+                    },
+                    {
+                        "type": "rich_text_section",
+                        "elements": [
+                            {
+                                "type": "text",
+                                "text": " "
+                            }
+                        ]
+                    },
+                    {
+                        "type": "rich_text_list",
+                        "style": "bullet",
+                        "elements": [
+                            {
+                                "type": "rich_text_section",
+                                "elements": [
+                                    {
+                                        "type": "link",
+                                        "url": f"{lambda_url}/eddie",
+                                        "text": "Eddie link"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "rich_text_section",
+                                "elements": [
+                                    {
+                                        "type": "link",
+                                        "url": f"{lambda_url}/katherine",
+                                        "text": "Katherine link"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "rich_text_section",
+                                "elements": [
+                                    {
+                                        "type": "link",
+                                        "url": f"{lambda_url}/abhay",
+                                        "text": "Abhay link"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                ],
+            }
+        ]
+    }
+
+    if not emoji:
         response = slack_client.chat_postMessage(
             channel=GAMES_CHANNEL_NAME,
             blocks=message_blocks["blocks"]
+        )
+    else:
+        response = slack_client.chat_postMessage(
+            channel=GAMES_CHANNEL_NAME,
+            blocks=message_blocks["blocks"],
+            unfurl_links=False,
+            unfurl_media=False
         )
 
 
@@ -182,7 +203,23 @@ def lambda_handler(event, context):
         }
 
     elif slash_command == "/smolcrossword":
-        handle_smolcrossword_command(event)
+        url = get_slash_text(event)
+
+        emoji = None
+        if 'washingtonpost' in url:
+            emoji = 'wapo'
+        elif 'vox' in url:
+            emoji = 'vox'
+        elif 'morningbrew' in url:
+            emoji = 'coffee'
+        elif 'newyorker' in url:
+            emoji = 'owl'
+        elif 'nymag' in url:
+            emoji = 'nymag'
+        elif 'theatlantic' in url:
+            emoji = 'theatlantic'
+
+        handle_crossword_command(event, emoji)
         return {
             "statusCode": 200
         }
