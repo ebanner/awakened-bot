@@ -220,6 +220,8 @@ def lambda_handler(event, context):
             emoji = 'theatlantic'
         elif 'nypost' in url:
             emoji = 'nypost'
+        elif 'crosswordclub' in url:
+            emoji = 'cc'
 
         handle_crossword_command(event, emoji)
         return {
