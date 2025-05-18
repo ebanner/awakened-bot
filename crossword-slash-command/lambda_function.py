@@ -16,13 +16,13 @@ def get(key, bucket='storage9'):
     value = object['Body'].read().decode('utf-8')
     return value
 
-# SLACK_BOT_TOKEN = os.environ['EDWARDS_SLACKBOT_DEV_SLACK_BOT_TOKEN']
-# GAMES_CHANNEL_NAME = 'general'
-# GAMES_CHANNEL_ID = 'C04C5AVUMQF'
+SLACK_BOT_TOKEN = os.environ['EDWARDS_SLACKBOT_DEV_SLACK_BOT_TOKEN']
+GAMES_CHANNEL_NAME = 'general'
+GAMES_CHANNEL_ID = 'C04C5AVUMQF'
 
-SLACK_BOT_TOKEN = os.environ['AWAKENED_SLACK_BOT_TOKEN']
-GAMES_CHANNEL_NAME = 'games'
-GAMES_CHANNEL_ID = 'C4TC1CB3P'
+# SLACK_BOT_TOKEN = os.environ['AWAKENED_SLACK_BOT_TOKEN']
+# GAMES_CHANNEL_NAME = 'games'
+# GAMES_CHANNEL_ID = 'C4TC1CB3P'
 
 slack_client = WebClient(SLACK_BOT_TOKEN)
 
@@ -71,6 +71,17 @@ def get_body_dict(event):
     return body_dict
 
 
+def get_slash_command(event):
+    if 'body' not in event:
+        return None
+    body_base64_encoded = event['body']
+    body_bytes = base64.b64decode(body_base64_encoded)
+    body_decoded = body_bytes.decode('utf-8')
+    body_dict = dict(urllib.parse.parse_qsl(body_decoded))
+    slash_command = body_dict.get("command")
+    return slash_command
+
+
 def get_user_agent(event):
     headers = event.get('headers')
     if headers:
@@ -78,13 +89,7 @@ def get_user_agent(event):
     return None
 
 
-def lambda_handler(event, context):
-    user_agent = get_user_agent(event)
-    if user_agent == 'Slackbot-LinkExpanding 1.0 (+https://api.slack.com/robots)':
-        return {
-            "statusCode": 200
-        }
-
+def handle_crossword_command(event):
     url = get_slash_text(event)
     if url:
         put('wapo-url', url)
@@ -161,33 +166,39 @@ def lambda_handler(event, context):
             blocks=message_blocks["blocks"]
         )
 
+
+def lambda_handler(event, context):
+    user_agent = get_user_agent(event)
+    if user_agent == 'Slackbot-LinkExpanding 1.0 (+https://api.slack.com/robots)':
         return {
             "statusCode": 200
         }
 
-        # return {
-        #     "statusCode": 200,
-        #     "body": json.dumps(message_blocks),
-        #     "headers": {
-        #         "Content-Type": "application/json"
-        #     }
-        # }
-    
-    if event.get('rawPath') == '/eddie':
-        # send_message('Eddie')
-        send_message_thread('Eddie')
-    elif event.get('rawPath') == '/katherine':
-        # send_message('Katherine')
-        send_message_thread('Katherine')
-    elif event.get('rawPath') == '/abhay':
-        # send_message('Abhay')
-        send_message_thread('Abhay')
-
-    url = get('wapo-url')
-    return {
-        "statusCode": 302,
-        "headers": {
-            "Location": url
+    slash_command = get_slash_command(event)
+    if slash_command == "/crossword":
+        handle_crossword_command(event)
+        return {
+            "statusCode": 200
         }
-    }
 
+    elif slash_command == "/smolcrossword":
+        handle_smolcrossword_command(event)
+        return {
+            "statusCode": 200
+        }
+
+    else:
+        if event.get('rawPath') == '/eddie':
+            send_message_thread('Eddie')
+        elif event.get('rawPath') == '/katherine':
+            send_message_thread('Katherine')
+        elif event.get('rawPath') == '/abhay':
+            send_message_thread('Abhay')
+
+        url = get('wapo-url')
+        return {
+            "statusCode": 302,
+            "headers": {
+                "Location": url
+            }
+        }
