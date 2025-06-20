@@ -29,11 +29,11 @@ GAMES_CHANNEL_ID = 'C091H60A9TN'
 slack_client = WebClient(SLACK_BOT_TOKEN)
 
 
-def send_message_thread(user):
+def send_message_thread(user, crossword_type):
     def get_latest_crossword_thread_ts():
         response = slack_client.conversations_history(channel=GAMES_CHANNEL_ID, limit=10)
         for message in response["messages"]:
-            if "Collab crossword" in message["text"]:
+            if crossword_type in message["text"]:
                 return message["ts"]
 
     latest_crossword_thread_ts = get_latest_crossword_thread_ts()
@@ -255,11 +255,11 @@ def lambda_handler(event, context):
         _, user, crossword_type = raw_path.split('/')
 
         if user == 'eddie':
-            send_message_thread('Eddie')
+            send_message_thread('Eddie', crossword_type)
         elif user == 'katherine':
-            send_message_thread('Katherine')
+            send_message_thread('Katherine', crossword_type)
         elif user == 'abhay':
-            send_message_thread('Abhay')
+            send_message_thread('Abhay', crossword_type)
 
         latest_crossword_urls = get('wapo-url')
         return {
