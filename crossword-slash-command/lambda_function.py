@@ -8,31 +8,26 @@ from slack_sdk import WebClient
 
 s3_client = boto3.client('s3')
 
+
 def put(key, value, bucket='storage9'):
     s3_client.put_object(Bucket=bucket, Key=key, Body=value)
 
 def get(key, bucket='storage9'):
     object = s3_client.get_object(Bucket=bucket, Key=key)
     value = object['Body'].read().decode('utf-8')
-    return value
+    return json.loads(value)
+
 
 # SLACK_BOT_TOKEN = os.environ['EDWARDS_SLACKBOT_DEV_SLACK_BOT_TOKEN']
-# GAMES_CHANNEL_NAME = 'general'
-# GAMES_CHANNEL_ID = 'C04C5AVUMQF'
+# GAMES_CHANNEL_NAME = 'cwords'
+# GAMES_CHANNEL_ID = 'C091CAXDY0N'
 
 SLACK_BOT_TOKEN = os.environ['AWAKENED_SLACK_BOT_TOKEN']
-GAMES_CHANNEL_NAME = 'games'
-GAMES_CHANNEL_ID = 'C4TC1CB3P'
+GAMES_CHANNEL_NAME = 'crosswords'
+GAMES_CHANNEL_ID = 'C091H60A9TN'
 
 slack_client = WebClient(SLACK_BOT_TOKEN)
 
-NOTIFICATIONS_CHANNEL_NAME = 'crossword-alerts'
-
-def send_message(user):
-    response = slack_client.chat_postMessage(
-        channel=NOTIFICATIONS_CHANNEL_NAME,
-        text=f"{user} is playing :wapo:"
-    )
 
 def send_message_thread(user):
     def get_latest_crossword_thread_ts():
@@ -47,7 +42,7 @@ def send_message_thread(user):
 
     response = slack_client.chat_postMessage(
         channel=GAMES_CHANNEL_NAME,
-        text=f"{user} is playing :wapo:",
+        text=f"{user} is playing :wapo2:",
         thread_ts=latest_crossword_thread_ts
     )
 
@@ -91,8 +86,12 @@ def get_user_agent(event):
 
 def handle_crossword_command(event, emoji=None):
     url = get_slash_text(event)
+    crossword_type = get_crossword_type(event)
 
-    put('wapo-url', url)
+    latest_crossword_urls = get('wapo-url')
+    latest_crossword_urls[crossword_type] = url
+    put('wapo-url', json.dumps(latest_crossword_urls))
+
     lambda_url = os.environ["LAMBDA_URL"]
 
     title_block = [
@@ -142,7 +141,7 @@ def handle_crossword_command(event, emoji=None):
                                 "elements": [
                                     {
                                         "type": "link",
-                                        "url": f"{lambda_url}/eddie",
+                                        "url": f"{lambda_url}/eddie/{crossword_type}",
                                         "text": "Eddie link"
                                     }
                                 ]
@@ -152,7 +151,7 @@ def handle_crossword_command(event, emoji=None):
                                 "elements": [
                                     {
                                         "type": "link",
-                                        "url": f"{lambda_url}/katherine",
+                                        "url": f"{lambda_url}/katherine/{crossword_type}",
                                         "text": "Katherine link"
                                     }
                                 ]
@@ -162,7 +161,7 @@ def handle_crossword_command(event, emoji=None):
                                 "elements": [
                                     {
                                         "type": "link",
-                                        "url": f"{lambda_url}/abhay",
+                                        "url": f"{lambda_url}/abhay/{crossword_type}",
                                         "text": "Abhay link"
                                     }
                                 ]
@@ -186,6 +185,29 @@ def handle_crossword_command(event, emoji=None):
             unfurl_links=False,
             unfurl_media=False
         )
+
+
+def get_crossword_type(event):
+    url = get_slash_text(event)
+
+    if 'washingtonpost' in url:
+        return 'washingtonpost'
+    elif 'vox' in url:
+        return 'vox '
+    elif 'morningbrew' in url:
+        return 'morningbrew'
+    elif 'newyorker' in url:
+        return 'newyorker'
+    elif 'nymag' in url:
+        return 'nymag'
+    elif 'theatlantic' in url:
+        return 'theatlantic'
+    elif 'nypost' in url:
+        return 'nypost'
+    elif 'crosswordclub' in url:
+        return 'crosswordclub'
+    else:
+        return 'unknown'
 
 
 def lambda_handler(event, context):
@@ -229,17 +251,21 @@ def lambda_handler(event, context):
         }
 
     else:
-        if event.get('rawPath') == '/eddie':
+        raw_path = event.get('rawPath')
+        _, user, crossword_type = raw_path.split('/')
+
+        if user == 'eddie':
             send_message_thread('Eddie')
-        elif event.get('rawPath') == '/katherine':
+        elif user == 'katherine':
             send_message_thread('Katherine')
-        elif event.get('rawPath') == '/abhay':
+        elif user == 'abhay':
             send_message_thread('Abhay')
 
-        url = get('wapo-url')
+        latest_crossword_urls = get('wapo-url')
         return {
             "statusCode": 302,
             "headers": {
-                "Location": url
+                "Location": latest_crossword_urls[crossword_type]
             }
         }
+
