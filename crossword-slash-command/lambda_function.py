@@ -19,13 +19,13 @@ def get(key, bucket='storage9'):
     return json.loads(value)
 
 
-# SLACK_BOT_TOKEN = os.environ['EDWARDS_SLACKBOT_DEV_SLACK_BOT_TOKEN']
-# GAMES_CHANNEL_NAME = 'cwords'
-# GAMES_CHANNEL_ID = 'C091CAXDY0N'
+SLACK_BOT_TOKEN = os.environ['EDWARDS_SLACKBOT_DEV_SLACK_BOT_TOKEN']
+GAMES_CHANNEL_NAME = 'cwords'
+GAMES_CHANNEL_ID = 'C091CAXDY0N'
 
-SLACK_BOT_TOKEN = os.environ['AWAKENED_SLACK_BOT_TOKEN']
-GAMES_CHANNEL_NAME = 'crosswords'
-GAMES_CHANNEL_ID = 'C091H60A9TN'
+# SLACK_BOT_TOKEN = os.environ['AWAKENED_SLACK_BOT_TOKEN']
+# GAMES_CHANNEL_NAME = 'crosswords'
+# GAMES_CHANNEL_ID = 'C091H60A9TN'
 
 slack_client = WebClient(SLACK_BOT_TOKEN)
 
@@ -222,25 +222,22 @@ def lambda_handler(event, context):
     elif slash_command == "/smolcrossword":
         url = get_slash_text(event)
 
-        emoji = None
-        if 'washingtonpost' in url:
-            emoji = 'wapo'
-        elif 'vox' in url:
-            emoji = 'vox'
-        elif 'morningbrew' in url:
-            emoji = 'coffee'
-        elif 'newyorker' in url:
-            emoji = 'owl'
-        elif 'nymag' in url:
-            emoji = 'nymag'
-        elif 'theatlantic' in url:
-            emoji = 'theatlantic'
-        elif 'nypost' in url:
-            emoji = 'nypost'
-        elif 'crosswordclub' in url:
-            emoji = 'cc'
+        emojis = { 
+            'washingtonpost':'wapo',
+            'vox': 'vox',
+            'morningbrew': 'coffee',
+            'newyorker': 'owl',
+            'nymag': 'nymag',
+            'theatlantic': 'theatlantic',
+            'nypost': 'nypost',
+            'crosswordclub': 'cc',
+        }
+
+        crossword_type = get_crossword_type(event)
+        emoji = emojis.get(crossword_type)
 
         handle_crossword_command(event, emoji)
+
         return {
             "statusCode": 200
         }
