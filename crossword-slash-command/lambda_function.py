@@ -3,6 +3,7 @@ import base64
 import boto3
 import urllib.parse
 import os
+import re
 
 from slack_sdk import WebClient
 
@@ -189,23 +190,10 @@ def handle_crossword_command(event, emoji=None):
 
 def get_crossword_type(event):
     url = get_slash_text(event)
-
-    if 'washingtonpost' in url:
-        return 'washingtonpost'
-    elif 'vox' in url:
-        return 'vox '
-    elif 'morningbrew' in url:
-        return 'morningbrew'
-    elif 'newyorker' in url:
-        return 'newyorker'
-    elif 'nymag' in url:
-        return 'nymag'
-    elif 'theatlantic' in url:
-        return 'theatlantic'
-    elif 'nypost' in url:
-        return 'nypost'
-    elif 'crosswordclub' in url:
-        return 'crosswordclub'
+    match = re.search(r'https?://(?:www\.)?([^./]+)\.com', url)
+    if match:
+        crossword_type = match.group(1)
+        return crossword_type
     else:
         return 'unknown'
 
@@ -218,7 +206,14 @@ def lambda_handler(event, context):
         }
 
     slash_command = get_slash_command(event)
-    if slash_command == "/crossword":
+    if slash_command == "/crossword-debug":
+        latest_crossword_urls = get('wapo-url')
+        return {
+            "statusCode": 200,
+            "body": f'`{json.dumps(latest_crossword_urls)}`'
+        }
+
+    elif slash_command == "/crossword":
         handle_crossword_command(event)
         return {
             "statusCode": 200
