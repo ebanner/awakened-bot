@@ -69,7 +69,7 @@ def lambda_handler(event, context):
         slash_text = 'smol'
     
     response = lambda_client.invoke(
-        FunctionName='awakened-bot-daily-slash-command-background',
+        FunctionName='awakened-bot-daily-slash-command-background',  # Get the current function name
         InvocationType='Event',
         Payload=json.dumps({
             'slack_response_url': response_url,
@@ -77,5 +77,5 @@ def lambda_handler(event, context):
         })
     )
     
-    return ''
+    return 'Creating daily thread...'
 
