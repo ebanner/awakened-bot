@@ -3,7 +3,7 @@ import json
 
 import re
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
 import random
 
@@ -16,8 +16,21 @@ import sqlite3
 
 from emojis import EMOJIS
 
+import time
+
+from slack_sdk import WebClient
 
 session = aiohttp.ClientSession()
+
+SLACK_BOT_TOKEN = os.environ['AWAKENED_SLACK_BOT_TOKEN']
+GAMES_CHANNEL_NAME = 'games'
+GAMES_CHANNEL_ID = 'C4TC1CB3P'
+
+# SLACK_BOT_TOKEN = os.environ['EDWARDS_SLACKBOT_DEV_SLACK_BOT_TOKEN']
+# GAMES_CHANNEL_NAME = 'general'
+# GAMES_CHANNEL_ID = 'C04C5AVUMQF'
+
+slack_client = WebClient(SLACK_BOT_TOKEN)
 
 
 async def get_wordle_lotd():
@@ -298,7 +311,7 @@ def get_eddie_blocks():
                 },
                 {
                     "type": "mrkdwn",
-                    "text": "*song*"
+                    "text": "*Song*"
                 },
                 {
                     "type": "mrkdwn",
@@ -332,23 +345,36 @@ def get_thread_blocks(slash_text):
     }
 
 
+def already_daily_commend_from_today():
+    today = date.today()
+    midnight = datetime.combine(today, datetime.min.time())
+    today_midnight_timestamp = int(midnight.timestamp())
+
+    response = slack_client.conversations_history(
+        channel=GAMES_CHANNEL_ID,
+        oldest=today_midnight_timestamp
+    )
+
+    for message in response['messages']:
+        if 'The Dailies' in message['text']:
+            return True
+
+    return False
+
+
 def lambda_handler(event, context):
+    if already_daily_commend_from_today():
+        return
+
     slack_response_url = event['slack_response_url']
     slash_text = event['slack_slash_text']
     
-    print('Getting thread blocks')
     data = get_thread_blocks(slash_text)
-    print('Got thread blocks')
-    print('Posting to slack response url')
     response = requests.post(
         slack_response_url,
         headers={"Content-Type": "application/json" },
         data=json.dumps(data)
     )
-    print('Posted to slack response url')
-    
-    print(response.status_code)
-    print(response.text)
     
     return ''
 
