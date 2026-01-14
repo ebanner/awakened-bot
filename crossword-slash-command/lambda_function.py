@@ -4,10 +4,13 @@ import boto3
 import urllib.parse
 import os
 import re
+from datetime import datetime, timedelta, timezone
 
 from slack_sdk import WebClient
 
 s3_client = boto3.client('s3')
+
+sch = boto3.client("scheduler")
 
 
 def put(key, value, bucket='storage9'):
@@ -19,20 +22,33 @@ def get(key, bucket='storage9'):
     return json.loads(value)
 
 
-SLACK_BOT_TOKEN = os.environ['EDWARDS_SLACKBOT_DEV_SLACK_BOT_TOKEN']
-GAMES_CHANNEL_NAME = 'cwords'
-GAMES_CHANNEL_ID = 'C091CAXDY0N'
+SLACK_WORKSPACE = 'awakened'
+SLACK_BOT_TOKEN = os.environ['AWAKENED_SLACK_BOT_TOKEN']
+CROSSWORDS_CHANNEL_NAME = 'crosswords'
+CROSSWORDS_CHANNEL_ID = 'C091H60A9TN'
+GAMES_CHANNEL_NAME = 'games'
+GAMES_CHANNEL_ID = 'C4TC1CB3P'
 
-# SLACK_BOT_TOKEN = os.environ['AWAKENED_SLACK_BOT_TOKEN']
-# GAMES_CHANNEL_NAME = 'crosswords'
-# GAMES_CHANNEL_ID = 'C091H60A9TN'
+# SLACK_WORKSPACE = "Edward's Slackbot Dev Workspace"
+# SLACK_BOT_TOKEN = os.environ['EDWARDS_SLACKBOT_DEV_SLACK_BOT_TOKEN']
+# CROSSWORDS_CHANNEL_NAME = 'general'
+# CROSSWORDS_CHANNEL_ID = 'C04C5AVUMQF'
+# GAMES_CHANNEL_NAME = 'general'
+# GAMES_CHANNEL_ID = 'C04C5AVUMQF'
 
 slack_client = WebClient(SLACK_BOT_TOKEN)
 
 
 def send_message_thread(user, crossword_type):
+    if crossword_type == 'crosswordclub':
+        return
+        
     def get_latest_crossword_thread_ts():
-        response = slack_client.conversations_history(channel=GAMES_CHANNEL_ID, limit=10)
+        response = None
+        if crossword_type == "crosswordclub":
+            response = slack_client.conversations_history(channel=GAMES_CHANNEL_ID, limit=10)
+        else:
+            response = slack_client.conversations_history(channel=CROSSWORDS_CHANNEL_ID, limit=10)
         for message in response["messages"]:
             if crossword_type in message["text"]:
                 return message["ts"]
@@ -41,11 +57,18 @@ def send_message_thread(user, crossword_type):
     if latest_crossword_thread_ts is None:
         return
 
-    response = slack_client.chat_postMessage(
-        channel=GAMES_CHANNEL_NAME,
-        text=f"{user} is playing :wapo2:",
-        thread_ts=latest_crossword_thread_ts
-    )
+    if crossword_type == "crosswordclub":
+        response = slack_client.chat_postMessage(
+            channel=GAMES_CHANNEL_NAME,
+            text=f"{user} is playing :wapo2:",
+            thread_ts=latest_crossword_thread_ts
+        )
+    else:
+        response = slack_client.chat_postMessage(
+            channel=CROSSWORDS_CHANNEL_NAME,
+            text=f"{user} is playing :wapo2:",
+            thread_ts=latest_crossword_thread_ts
+        )
 
 def get_slash_text(event):
     if 'body' not in event:
@@ -83,6 +106,17 @@ def get_user_agent(event):
     if headers:
         return headers.get('user-agent')
     return None
+
+
+def get_daily_games_message():
+    response = slack_client.conversations_history(
+        channel=GAMES_CHANNEL_ID,
+        limit=10
+    )
+    
+    for message in response['messages']:
+        if 'The Dailies' in message['text']:
+            return message
 
 
 def handle_crossword_command(event, emoji=None):
@@ -137,7 +171,8 @@ def handle_crossword_command(event, emoji=None):
                         "type": "rich_text_list",
                         "style": "bullet",
                         "elements": [
-                            {
+                            *(
+                                [{
                                 "type": "rich_text_section",
                                 "elements": [
                                     {
@@ -146,8 +181,10 @@ def handle_crossword_command(event, emoji=None):
                                         "text": "Eddie link"
                                     }
                                 ]
-                            },
-                            {
+                                }] if emoji != 'vox' else []
+                            ),
+                            *(
+                                [{
                                 "type": "rich_text_section",
                                 "elements": [
                                     {
@@ -156,7 +193,8 @@ def handle_crossword_command(event, emoji=None):
                                         "text": "Katherine link"
                                     }
                                 ]
-                            },
+                                }] if emoji != 'lat' else []
+                            ),
                             {
                                 "type": "rich_text_section",
                                 "elements": [
@@ -173,18 +211,20 @@ def handle_crossword_command(event, emoji=None):
             }
         ]
     }
-
-    if not emoji:
+    
+    if crossword_type == 'crosswordclub':
+        daily_games_message = get_daily_games_message()
         response = slack_client.chat_postMessage(
             channel=GAMES_CHANNEL_NAME,
-            blocks=message_blocks["blocks"]
-        )
-    else:
-        response = slack_client.chat_postMessage(
-            channel=GAMES_CHANNEL_NAME,
+            thread_ts=daily_games_message['ts'],
             blocks=message_blocks["blocks"],
             unfurl_links=False,
             unfurl_media=False
+        )
+    else:
+        response = slack_client.chat_postMessage(
+            channel=CROSSWORDS_CHANNEL_NAME,
+            blocks=message_blocks["blocks"]
         )
 
 
@@ -196,6 +236,40 @@ def get_crossword_type(event):
         return crossword_type
     else:
         return 'unknown'
+
+
+def kick_off_eventbridge(crossword_url, crossword_type):
+    SCHEDULE_NAME = "run-ecs-task-via-lambda"
+    GROUP_NAME = "default"
+
+    # Set schedule to run now for 15 minutes
+    start = datetime.now(timezone.utc) + timedelta(seconds=5)
+    end = start + timedelta(minutes=15)
+
+    # Get the existing schedule
+    existing = sch.get_schedule(Name=SCHEDULE_NAME, GroupName=GROUP_NAME)
+    target = existing["Target"]
+
+    # Inject the dynamic input payload for Lambda
+    target["Input"] = json.dumps({
+        "crossword_url": crossword_url,
+        "crossword_type": crossword_type,
+        "slack_workspace": SLACK_WORKSPACE,
+    })
+
+    # Update schedule
+    sch.update_schedule(
+        Name=SCHEDULE_NAME,
+        GroupName=GROUP_NAME,
+        ScheduleExpression="rate(1 minute)",
+        StartDate=start,
+        EndDate=end,
+        FlexibleTimeWindow={"Mode": "OFF"},
+        Target=target,
+        State="ENABLED"
+    )
+
+    print(f"Updated {SCHEDULE_NAME} to run with crossword_url={crossword_url}")
 
 
 def lambda_handler(event, context):
@@ -214,7 +288,24 @@ def lambda_handler(event, context):
         }
 
     elif slash_command == "/crossword":
-        handle_crossword_command(event)
+        url = get_slash_text(event)
+
+        emojis = { 
+            'washingtonpost':'wapo',
+            'vox': 'vox',
+            'morningbrew': 'coffee',
+            'newyorker': 'owl',
+            'nymag': 'nymag',
+            'theatlantic': 'theatlantic',
+            'nypost': 'nypost',
+            'crosswordclub': 'cc',
+            'latimes': 'lat'
+        }
+
+        crossword_type = get_crossword_type(event)
+        emoji = emojis.get(crossword_type)
+
+        handle_crossword_command(event, emoji)
         return {
             "statusCode": 200
         }
@@ -231,6 +322,7 @@ def lambda_handler(event, context):
             'theatlantic': 'theatlantic',
             'nypost': 'nypost',
             'crosswordclub': 'cc',
+            'latimes': 'lat'
         }
 
         crossword_type = get_crossword_type(event)
@@ -252,6 +344,13 @@ def lambda_handler(event, context):
             send_message_thread('Katherine', crossword_type)
         elif user == 'abhay':
             send_message_thread('Abhay', crossword_type)
+
+        print("CHECKING CROSSWORD_TYPE", crossword_type)
+        if crossword_type in ['crosswordclub']:
+            print("KICKING OFF EVENTBRIDGE")
+            latest_crossword_urls = get('wapo-url')
+            crossword_url = latest_crossword_urls[crossword_type]
+            kick_off_eventbridge(crossword_url, crossword_type)
 
         latest_crossword_urls = get('wapo-url')
         return {
