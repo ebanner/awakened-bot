@@ -20,6 +20,8 @@ import time
 
 from slack_sdk import WebClient
 
+from zoneinfo import ZoneInfo
+
 session = aiohttp.ClientSession()
 
 SLACK_BOT_TOKEN = os.environ['AWAKENED_SLACK_BOT_TOKEN']
@@ -346,7 +348,8 @@ def get_thread_blocks(slash_text):
 
 
 def already_daily_commend_from_today():
-    today = date.today()
+    eastern = ZoneInfo("America/New_York")
+    today = datetime.now(eastern).date()
     midnight = datetime.combine(today, datetime.min.time())
     today_midnight_timestamp = int(midnight.timestamp())
 
