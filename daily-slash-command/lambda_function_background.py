@@ -1,26 +1,18 @@
-import os
-import json
-
-import re
-
-from datetime import datetime, timedelta, date
-
-import random
-
-import requests
-
 import asyncio
-import aiohttp
-
+import json
+import os
+import random
+import re
 import sqlite3
-
-from emojis import EMOJIS
-
 import time
+from datetime import date, datetime, timedelta
+from zoneinfo import ZoneInfo
 
+import aiohttp
+import requests
 from slack_sdk import WebClient
 
-from zoneinfo import ZoneInfo
+from emojis import EMOJIS
 
 session = aiohttp.ClientSession()
 
@@ -31,6 +23,9 @@ GAMES_CHANNEL_ID = 'C4TC1CB3P'
 # SLACK_BOT_TOKEN = os.environ['EDWARDS_SLACKBOT_DEV_SLACK_BOT_TOKEN']
 # GAMES_CHANNEL_NAME = 'general'
 # GAMES_CHANNEL_ID = 'C04C5AVUMQF'
+
+SUPABASE_URL = os.environ['SUPABASE_URL']
+SUPABASE_KEY = os.environ['SUPABASE_KEY']
 
 slack_client = WebClient(SLACK_BOT_TOKEN)
 
@@ -63,25 +58,18 @@ async def get_random_word():
 
 
 def get_today_song():
-    def get_num_songs(cursor):
-        cursor.execute("SELECT COUNT(*) FROM songs")
-        num_songs, = cursor.fetchone()
-        return num_songs
-        
-    def get_day_index():
-        day_str = datetime.now().strftime("%Y%m%d")
-        day_index = int(day_str)
-        return day_index
-        
-    with sqlite3.connect("awakened_songs.db") as conn:
-        cursor = conn.cursor()
-        num_songs = get_num_songs(cursor)
-        day_index = get_day_index()
-        
-        cursor.execute("SELECT * FROM songs WHERE [index] = ?", (day_index % num_songs,))
-        index, title, url = cursor.fetchone()
+    response = requests.post(
+        f"{SUPABASE_URL}/rest/v1/rpc/random_song",
+        headers={
+            "apikey": SUPABASE_KEY,
+            "Authorization": f"Bearer {SUPABASE_KEY}",
+            "Content-Type": "application/json",
+        }
+    )
+    
+    result = response.json()
 
-        return index, title, url
+    return result['id'], result['title'], result['link'], result['user']
 
 
 def get_day():
@@ -203,7 +191,7 @@ def get_eddie_blocks():
     date = get_date()
     loop = asyncio.get_event_loop()
     print('Making API calls')
-    _, song_title, song_url = get_today_song()
+    _, song_title, song_url, song_uploader = get_today_song()
     today_event_str, random_word, wordle_lotd, wiby_url = loop.run_until_complete(
         asyncio.gather(
             get_today_event_str(),
@@ -217,6 +205,21 @@ def get_eddie_blocks():
     emoji_name = get_emoji_name()
     
     random_mini_emoji = random.choice(['mini', 'mini2', 'mini3'])
+
+    USERS = {
+        "U0XTHU2LR": "abhay",
+        "U092ZS87ABB": "jason",
+        "U3U2ALLC8": "scott",
+        "UEH585CJE": "katherine",
+        "U246YJFFA": "david",
+        "U02780B5563": "eddie",
+        "U1CK5QKPT": "hhh",
+        "UCSKAT9DG": "TruthThatIs",
+        "U0XQBERD0": "josh",
+        "U0XSZH4FK": "leo"
+    }
+
+    username_uploader = USERS.get(song_uploader, song_uploader)
     
     eddie_blocks = [
         {
@@ -258,7 +261,7 @@ def get_eddie_blocks():
                         },
                         {
                             "type": "emoji",
-                            "name": "plusword"
+                            "name": emoji_name
                         },
       #                  {
                         #     "type": "text",
@@ -281,7 +284,7 @@ def get_eddie_blocks():
             "fields": [
                 {
                     "type": "mrkdwn",
-                    "text": "*Word*"
+                    "text": ":wordle:" #+ " " + "*Word*"
                 },
                 {
                     "type": "plain_text",
@@ -295,17 +298,17 @@ def get_eddie_blocks():
                 #     "type": "plain_text",
                 #     "text": wordle_lotd
                 # },
+                # {
+                #     "type": "mrkdwn",
+                #     "text": "*Emoji*"
+                # },
+                # {
+                #     "type": "mrkdwn",
+                #     "text": f':{emoji_name}:',
+                # },
                 {
                     "type": "mrkdwn",
-                    "text": "*Emoji*"
-                },
-                {
-                    "type": "mrkdwn",
-                    "text": f':{emoji_name}:',
-                },
-                {
-                    "type": "mrkdwn",
-                    "text": "*wiby*"
+                    "text": ":retropepethink:" #+ " " + "*wiby*"
                 },
                 {
                     "type": "mrkdwn",
@@ -313,7 +316,7 @@ def get_eddie_blocks():
                 },
                 {
                     "type": "mrkdwn",
-                    "text": "*Song*"
+                    "text": ":positivetone2:" + " " + f"(@{username_uploader})" #+ " " + f"*Song* (@{username_uploader})"
                 },
                 {
                     "type": "mrkdwn",
